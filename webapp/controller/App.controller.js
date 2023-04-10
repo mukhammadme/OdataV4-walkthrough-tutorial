@@ -53,6 +53,29 @@ sap.ui.define([
         }
       });
     },
+
+    onDelete: function () {
+      var oContext,
+        oSelected = this.byId("peopleList").getSelectedItem(),
+        sUserName;
+
+      if (oSelected) {
+        oContext = oSelected.getBindingContext();
+        sUserName = oContext.getProperty("UserName");
+        oContext.delete().then(function () {
+          MessageToast.show(this._getText("deletionSuccessMessage", sUserName));
+        }.bind(this), function (oError) {
+          this._setUIChanges();
+          if (oError.canceled) {
+            MessageToast.show(this._getText("deletionRestoredMessage", sUserName));
+            return;
+          }
+          MessageBox.error(oError.message + ": " + sUserName);
+        }.bind(this));
+        this._setUIChanges(true);
+      }
+    },
+
     onInputChange: function (oEvt) {
       if (oEvt.getParameter("escPressed")) {
         this._setUIChanges();
@@ -74,11 +97,26 @@ sap.ui.define([
       oBinding.refresh();
       MessageToast.show(this._getText("refreshSuccessMessage"));
     },
+
     onResetChanges: function () {
       this.byId("peopleList").getBinding("items").resetChanges();
       this._bTechnicalErrors = false;
       this._setUIChanges();
     },
+
+    onResetDataSource: function () {
+      var oModel = this.getView().getModel(),
+        oOperation = oModel.bindContext("/ResetDataSource(...)");
+
+      oOperation.execute().then(function () {
+        oModel.refresh();
+        MessageToast.show(this._getText("sourceResetSuccessMessage"));
+      }.bind(this), function (oError) {
+        MessageBox.error(oError.message);
+      }
+      );
+    },
+
     onSave: function () {
       var fnSuccess = function () {
         this._setBusy(false);
